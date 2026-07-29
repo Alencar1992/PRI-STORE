@@ -336,6 +336,13 @@
       white-space: nowrap;
     }
 
+    .app-icon img {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      object-fit: cover;
+    }
+
     .app-content { position: relative; z-index: 1; min-width: 0; }
     .app-name { margin: 0; font-size: .96rem; line-height: 1.22; }
     .app-description {
@@ -553,6 +560,7 @@
     .field-row { display: grid; grid-template-columns: 88px 1fr; gap: 10px; }
 
     label { color: #e9e1f2; font-size: .78rem; font-weight: 750; }
+    .field-label { color: #e9e1f2; font-size: .78rem; font-weight: 750; }
 
     .field input,
     .field select {
@@ -566,6 +574,117 @@
     }
 
     .field input::placeholder { color: #82798c; }
+
+    .icon-picker {
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      align-items: center;
+      gap: 13px;
+      padding: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 19px;
+      background: rgba(0,0,0,.3);
+    }
+
+    .icon-preview {
+      display: grid;
+      width: 68px;
+      height: 68px;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 21px;
+      background: linear-gradient(145deg,#b99cff,#7354d3);
+      box-shadow: inset 0 1px rgba(255,255,255,.24), 0 10px 24px rgba(0,0,0,.3);
+      font-size: 1.85rem;
+      white-space: nowrap;
+    }
+
+    .icon-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .icon-picker-copy { min-width: 0; }
+    .icon-picker-copy strong { display: block; font-size: .88rem; }
+    .icon-picker-copy p { margin: 4px 0 0; color: var(--muted); font-size: .74rem; }
+
+    .icon-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .icon-option {
+      display: grid;
+      min-height: 50px;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      padding: 5px 4px;
+      border: 1px solid var(--stroke);
+      border-radius: 15px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: .67rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .icon-option strong { color: var(--text); font-size: 1.08rem; line-height: 1; }
+    .icon-option.active { border-color: var(--stroke-strong); background: rgba(203,183,255,.12); color: var(--lilac); }
+    .icon-option input { display: none; }
+
+    .emoji-toolbar {
+      display: flex;
+      gap: 8px;
+      margin: 20px -18px 0;
+      padding: 2px 18px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .emoji-toolbar::-webkit-scrollbar { display: none; }
+
+    .emoji-category {
+      min-height: 42px;
+      flex: 0 0 auto;
+      padding: 0 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 800;
+    }
+
+    .emoji-category[aria-pressed="true"] {
+      border-color: var(--stroke-strong);
+      background: rgba(203,183,255,.13);
+      color: var(--lilac);
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+      margin-top: 9px;
+    }
+
+    .emoji-button {
+      display: grid;
+      min-width: 0;
+      min-height: 48px;
+      place-items: center;
+      border: 0;
+      border-radius: 13px;
+      background: transparent;
+      font-size: 1.55rem;
+    }
+
+    .emoji-button:active { background: rgba(203,183,255,.13); }
+    .emoji-empty { grid-column: 1 / -1; padding: 28px 10px; color: var(--muted); font-size: .84rem; text-align: center; }
 
     .pin-input {
       font-size: 1.45rem !important;
@@ -644,6 +763,7 @@
       .filters { margin-right: -12px; margin-left: -12px; padding-right: 12px; padding-left: 12px; }
       .brand-status { display: none; }
       .admin-fab span { display: none; }
+      .emoji-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -789,21 +909,43 @@
           <label for="appUrl">Link completo</label>
           <input id="appUrl" type="url" maxlength="500" placeholder="https://…" required>
         </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="appEmoji">Emoji</label>
-            <input id="appEmoji" type="text" maxlength="8" placeholder="✨" required>
+        <div class="field">
+          <span class="field-label">Ícone do aplicativo</span>
+          <div class="icon-picker">
+            <div class="icon-preview" id="iconPreview" aria-hidden="true">✨</div>
+            <div class="icon-picker-copy">
+              <strong id="iconChoiceTitle">Sugestão automática</strong>
+              <p id="iconChoiceDescription">Digite o nome para receber uma sugestão.</p>
+            </div>
           </div>
-          <div class="field">
-            <label for="appCategory">Categoria</label>
-            <select id="appCategory">
-              <option>Negócios</option>
-              <option>Vendas</option>
-              <option>Finanças</option>
-              <option>Produtividade</option>
-              <option>Outros</option>
-            </select>
+          <div class="icon-options" aria-label="Escolher tipo de ícone">
+            <button class="icon-option active" id="useSuggestionButton" type="button" aria-pressed="true">
+              <strong aria-hidden="true">✨</strong>
+              Sugestão
+            </button>
+            <button class="icon-option" id="openEmojiButton" type="button" aria-pressed="false">
+              <strong aria-hidden="true">😊</strong>
+              Emojis
+            </button>
+            <label class="icon-option" id="imageOption">
+              <strong aria-hidden="true">🖼️</strong>
+              Imagem
+              <input id="appImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+            </label>
           </div>
+          <input id="appEmoji" type="hidden" value="✨">
+          <input id="appIconType" type="hidden" value="emoji">
+          <input id="appIconValue" type="hidden" value="✨">
+        </div>
+        <div class="field">
+          <label for="appCategory">Categoria</label>
+          <select id="appCategory">
+            <option>Negócios</option>
+            <option>Vendas</option>
+            <option>Finanças</option>
+            <option>Produtividade</option>
+            <option>Outros</option>
+          </select>
         </div>
         <div class="field">
           <label for="appDescription">Descrição neste aparelho</label>
@@ -816,6 +958,27 @@
         </div>
         <button class="button danger full" id="deleteAppButton" type="button" hidden>Excluir aplicativo</button>
       </form>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" id="emojiSheet" role="dialog" aria-modal="true" aria-labelledby="emojiTitle" hidden>
+    <section class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <h2 id="emojiTitle">Escolher emoji</h2>
+          <p>Toque em um emoji para usar como ícone do aplicativo.</p>
+        </div>
+        <button class="close-sheet" type="button" data-close="emojiSheet" aria-label="Fechar">✕</button>
+      </div>
+      <div class="form">
+        <div class="field">
+          <label for="emojiSearch">Buscar emoji</label>
+          <input id="emojiSearch" type="search" inputmode="search" autocomplete="off" placeholder="Ex.: dinheiro, comida, carro">
+        </div>
+      </div>
+      <div class="emoji-toolbar" id="emojiCategories" aria-label="Categorias de emoji"></div>
+      <div class="emoji-grid" id="emojiGrid" aria-live="polite"></div>
     </section>
   </div>
 
@@ -870,7 +1033,8 @@
       recent: "pri_store_recent_v2",
       details: "pri_store_details_v2",
       pin: "pri_store_pin_v2",
-      lockout: "pri_store_pin_lockout_v2"
+      lockout: "pri_store_pin_lockout_v2",
+      recentEmojis: "pri_store_recent_emojis_v1"
     };
     const SESSION_MS = 15 * 60 * 1000;
 
@@ -888,6 +1052,53 @@
       { match: /tarefa/i, category: "Produtividade", description: "Organize tarefas e cuide da sua rotina.", gradient: "linear-gradient(145deg,#cbb7ff,#8669e2)", glow: "rgba(203,183,255,.18)" }
     ];
 
+    const ICON_SUGGESTIONS = [
+      { match: /shopee|loja|store|shop|venda/i, emoji: "🛍️", label: "Compras e vendas" },
+      { match: /tapi|comida|lanche|restaurante|food/i, emoji: "🌮", label: "Alimentação" },
+      { match: /pdv|caixa|checkout/i, emoji: "🧾", label: "Ponto de venda" },
+      { match: /finan|dinheiro|gasto|despesa|receita|banco/i, emoji: "💰", label: "Finanças" },
+      { match: /tarefa|lista|agenda|rotina|todo/i, emoji: "✅", label: "Tarefas" },
+      { match: /relat|gr[aá]fico|painel|dashboard/i, emoji: "📊", label: "Relatórios" },
+      { match: /entrega|delivery|moto|rota/i, emoji: "🛵", label: "Entregas" },
+      { match: /carro|ve[ií]culo|auto/i, emoji: "🚗", label: "Veículos" },
+      { match: /foto|imagem|c[aâ]mera|print/i, emoji: "📸", label: "Fotos" },
+      { match: /m[uú]sica|audio|som|radio/i, emoji: "🎵", label: "Música" },
+      { match: /filme|v[ií]deo|netflix|stream/i, emoji: "🎬", label: "Vídeos" },
+      { match: /chat|mensagem|whatsapp|contato/i, emoji: "💬", label: "Mensagens" },
+      { match: /config|ajuste|sistema|ferramenta/i, emoji: "⚙️", label: "Ferramentas" },
+      { match: /casa|lar|home/i, emoji: "🏠", label: "Casa" },
+      { match: /sa[uú]de|m[eé]dico|rem[eé]dio/i, emoji: "❤️‍🩹", label: "Saúde" },
+      { match: /estudo|curso|escola|livro/i, emoji: "📚", label: "Estudos" },
+      { match: /calcul|conta/i, emoji: "🧮", label: "Cálculos" }
+    ];
+
+    const EMOJI_GROUPS = {
+      "Rostos": [
+        ["😀","feliz sorriso"],["😃","feliz alegria"],["😄","sorriso"],["😁","alegre"],["😊","feliz fofo"],["🥰","amor carinho"],["😍","apaixonado amor"],["😘","beijo"],
+        ["😎","legal óculos"],["🤩","estrela incrível"],["🥳","festa aniversário"],["🤔","pensando dúvida"],["😴","sono dormir"],["😭","triste choro"],["😡","bravo raiva"],["🤯","surpreso"]
+      ],
+      "Pessoas": [
+        ["👩","mulher pessoa"],["👨","homem pessoa"],["👧","menina criança"],["👦","menino criança"],["👶","bebê"],["👩‍💼","mulher trabalho"],["👨‍💼","homem trabalho"],["👩‍🍳","cozinheira comida"],
+        ["👨‍🍳","cozinheiro comida"],["👩‍💻","mulher tecnologia"],["👨‍💻","homem tecnologia"],["🙋‍♀️","ajuda mulher"],["💅","beleza unha"],["💃","dança mulher"],["🧘‍♀️","bem estar"],["👪","família"]
+      ],
+      "Atividades": [
+        ["✅","tarefa concluído"],["📅","calendário agenda"],["📝","nota escrever"],["📚","livro estudo"],["🎓","curso faculdade"],["🏆","troféu prêmio"],["🎯","meta objetivo"],["🏋️","academia treino"],
+        ["⚽","futebol esporte"],["🎮","jogo game"],["🎨","arte pintura"],["🎵","música som"],["🎬","filme vídeo"],["📸","foto câmera"],["✈️","viagem avião"],["🧳","viagem mala"]
+      ],
+      "Objetos": [
+        ["🛍️","compras loja shopee"],["🛒","carrinho compras"],["💰","dinheiro finanças"],["💳","cartão banco"],["🧾","recibo pdv caixa"],["📊","gráfico relatório"],["🧮","calculadora conta"],["💡","ideia luz"],
+        ["📱","celular telefone"],["💻","computador tecnologia"],["⚙️","configuração ferramenta"],["🔐","segurança cadeado"],["🔔","alerta sino"],["📦","caixa produto"],["🎁","presente"],["🧹","limpeza"]
+      ],
+      "Lugares": [
+        ["🏠","casa lar"],["🏢","empresa prédio"],["🏪","loja mercado"],["🏦","banco dinheiro"],["🏥","hospital saúde"],["🏫","escola estudo"],["🍽️","restaurante comida"],["☕","café bebida"],
+        ["🌮","tapioca comida"],["🍔","lanche comida"],["🍕","pizza comida"],["🛵","moto entrega"],["🚗","carro veículo"],["🚌","ônibus transporte"],["🗺️","mapa rota"],["📍","localização endereço"]
+      ],
+      "Símbolos": [
+        ["❤️","amor coração"],["🩷","amor rosa"],["💜","amor lilás"],["⭐","estrela favorito"],["✨","brilho novo"],["🔥","fogo destaque"],["💎","premium diamante"],["🌸","flor feminino"],
+        ["🎀","laço rosa"],["👑","coroa premium"],["🔴","vermelho círculo"],["🟠","laranja círculo"],["🟡","amarelo círculo"],["🟢","verde círculo"],["🔵","azul círculo"],["🟣","lilás círculo"]
+      ]
+    };
+
     const state = {
       apps: [],
       filter: "all",
@@ -897,7 +1108,10 @@
       details: readJSON(STORAGE.details, {}),
       adminUntil: 0,
       pinFailures: 0,
-      deleteTarget: null
+      deleteTarget: null,
+      iconDraft: { type: "emoji", value: "✨", suggestedEmoji: "✨", manual: false },
+      emojiCategory: "Recentes",
+      recentEmojis: readJSON(STORAGE.recentEmojis, [])
     };
 
     const el = {
@@ -921,6 +1135,21 @@
       appForm: document.querySelector("#appForm"),
       appFormTitle: document.querySelector("#appFormTitle"),
       appError: document.querySelector("#appError"),
+      appName: document.querySelector("#appName"),
+      appEmoji: document.querySelector("#appEmoji"),
+      appIconType: document.querySelector("#appIconType"),
+      appIconValue: document.querySelector("#appIconValue"),
+      iconPreview: document.querySelector("#iconPreview"),
+      iconChoiceTitle: document.querySelector("#iconChoiceTitle"),
+      iconChoiceDescription: document.querySelector("#iconChoiceDescription"),
+      useSuggestionButton: document.querySelector("#useSuggestionButton"),
+      openEmojiButton: document.querySelector("#openEmojiButton"),
+      imageOption: document.querySelector("#imageOption"),
+      appImageInput: document.querySelector("#appImageInput"),
+      emojiSheet: document.querySelector("#emojiSheet"),
+      emojiSearch: document.querySelector("#emojiSearch"),
+      emojiCategories: document.querySelector("#emojiCategories"),
+      emojiGrid: document.querySelector("#emojiGrid"),
       deleteAppButton: document.querySelector("#deleteAppButton"),
       deleteSheet: document.querySelector("#deleteSheet"),
       deleteDescription: document.querySelector("#deleteDescription"),
@@ -945,7 +1174,12 @@
     }
 
     function writeJSON(key, value) {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch {
+        return false;
+      }
     }
 
     function appKey(app) {
@@ -965,8 +1199,14 @@
         gradient: "linear-gradient(145deg,#b69cf2,#745ab8)",
         glow: "rgba(155,123,255,.16)"
       };
-      const local = state.details[appKey(base)] || {};
-      return { ...base, ...profile, ...local };
+      const local = state.details[appKey(base)] || state.details[`url:${base.url}`] || {};
+      return {
+        ...base,
+        ...profile,
+        iconType: app.iconType === "image" ? "image" : "emoji",
+        iconValue: app.iconValue || base.emoji,
+        ...local
+      };
     }
 
     function validHttpUrl(value) {
@@ -976,6 +1216,148 @@
       } catch {
         return false;
       }
+    }
+
+    function safeIconImage(value) {
+      return /^data:image\/(?:png|jpeg|webp);base64,/i.test(String(value || ""));
+    }
+
+    function suggestIcon(name) {
+      const suggestion = ICON_SUGGESTIONS.find(item => item.match.test(String(name || "")));
+      return suggestion || { emoji: "🧩", label: "Aplicativo" };
+    }
+
+    function updateIconPreview() {
+      el.iconPreview.replaceChildren();
+      if (state.iconDraft.type === "image" && safeIconImage(state.iconDraft.value)) {
+        const image = document.createElement("img");
+        image.src = state.iconDraft.value;
+        image.alt = "";
+        el.iconPreview.append(image);
+        el.iconChoiceTitle.textContent = "Imagem personalizada";
+        el.iconChoiceDescription.textContent = "Imagem otimizada e salva neste aparelho.";
+      } else {
+        el.iconPreview.textContent = state.iconDraft.value || state.iconDraft.suggestedEmoji || "🧩";
+        el.iconChoiceTitle.textContent = state.iconDraft.manual ? "Emoji escolhido" : "Sugestão automática";
+        const suggested = suggestIcon(el.appName.value);
+        el.iconChoiceDescription.textContent = state.iconDraft.manual ? "Escolhido na galeria de emojis." : `Sugestão para ${suggested.label.toLocaleLowerCase("pt-BR")}.`;
+      }
+
+      el.appEmoji.value = state.iconDraft.type === "emoji" ? state.iconDraft.value : state.iconDraft.suggestedEmoji;
+      el.appIconType.value = state.iconDraft.type;
+      el.appIconValue.value = state.iconDraft.value;
+      el.useSuggestionButton.classList.toggle("active", !state.iconDraft.manual && state.iconDraft.type === "emoji");
+      el.useSuggestionButton.setAttribute("aria-pressed", String(!state.iconDraft.manual && state.iconDraft.type === "emoji"));
+      el.openEmojiButton.classList.toggle("active", state.iconDraft.manual && state.iconDraft.type === "emoji");
+      el.openEmojiButton.setAttribute("aria-pressed", String(state.iconDraft.manual && state.iconDraft.type === "emoji"));
+      el.imageOption.classList.toggle("active", state.iconDraft.type === "image");
+      el.imageOption.setAttribute("aria-pressed", String(state.iconDraft.type === "image"));
+    }
+
+    function applySuggestedIcon(force = false) {
+      const suggestion = suggestIcon(el.appName.value);
+      state.iconDraft.suggestedEmoji = suggestion.emoji;
+      if (!state.iconDraft.manual || force) {
+        state.iconDraft = { type: "emoji", value: suggestion.emoji, suggestedEmoji: suggestion.emoji, manual: false };
+      }
+      updateIconPreview();
+    }
+
+    function emojiEntries() {
+      if (state.emojiCategory === "Recentes") {
+        return state.recentEmojis.map(emoji => [emoji, "recente"]);
+      }
+      return EMOJI_GROUPS[state.emojiCategory] || [];
+    }
+
+    function renderEmojiCategories() {
+      el.emojiCategories.replaceChildren();
+      ["Recentes", ...Object.keys(EMOJI_GROUPS)].forEach(category => {
+        const button = document.createElement("button");
+        button.className = "emoji-category";
+        button.type = "button";
+        button.dataset.emojiCategory = category;
+        button.setAttribute("aria-pressed", String(state.emojiCategory === category));
+        button.textContent = category;
+        el.emojiCategories.append(button);
+      });
+    }
+
+    function renderEmojiGrid() {
+      const query = el.emojiSearch.value.trim().toLocaleLowerCase("pt-BR");
+      const source = query
+        ? Object.values(EMOJI_GROUPS).flat().filter(([, terms]) => terms.includes(query))
+        : emojiEntries();
+      el.emojiGrid.replaceChildren();
+
+      if (!source.length) {
+        const empty = document.createElement("p");
+        empty.className = "emoji-empty";
+        empty.textContent = query ? "Nenhum emoji encontrado." : "Os emojis usados recentemente aparecerão aqui.";
+        el.emojiGrid.append(empty);
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      source.forEach(([emoji]) => {
+        const button = document.createElement("button");
+        button.className = "emoji-button";
+        button.type = "button";
+        button.dataset.emoji = emoji;
+        button.setAttribute("aria-label", `Usar emoji ${emoji}`);
+        button.textContent = emoji;
+        fragment.append(button);
+      });
+      el.emojiGrid.append(fragment);
+    }
+
+    function selectEmoji(emoji) {
+      state.iconDraft = {
+        type: "emoji",
+        value: emoji,
+        suggestedEmoji: suggestIcon(el.appName.value).emoji,
+        manual: true
+      };
+      state.recentEmojis = [emoji, ...state.recentEmojis.filter(item => item !== emoji)].slice(0, 24);
+      writeJSON(STORAGE.recentEmojis, state.recentEmojis);
+      updateIconPreview();
+      closeSheet(el.emojiSheet);
+      document.body.style.overflow = "hidden";
+      showToast("Emoji escolhido.");
+    }
+
+    function optimizeImage(file) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith("image/")) {
+          reject(new Error("Escolha um arquivo de imagem."));
+          return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          reject(new Error("A imagem deve ter no máximo 8 MB."));
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = () => reject(new Error("Formato de imagem inválido."));
+          image.onload = () => {
+            const size = 256;
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext("2d");
+            const scale = Math.max(size / image.width, size / image.height);
+            const width = image.width * scale;
+            const height = image.height * scale;
+            context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+            resolve(canvas.toDataURL("image/webp", .82));
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     function icon(path) {
@@ -1040,7 +1422,14 @@
       const appIcon = document.createElement("div");
       appIcon.className = "app-icon";
       appIcon.setAttribute("aria-hidden", "true");
-      appIcon.textContent = app.emoji || "✨";
+      if (app.iconType === "image" && safeIconImage(app.iconValue)) {
+        const image = document.createElement("img");
+        image.src = app.iconValue;
+        image.alt = "";
+        appIcon.append(image);
+      } else {
+        appIcon.textContent = app.iconValue || app.emoji || "✨";
+      }
 
       const content = document.createElement("div");
       content.className = "app-content";
@@ -1128,8 +1517,10 @@
 
     function closeSheet(sheet) {
       sheet.classList.remove("open");
-      setTimeout(() => { sheet.hidden = true; }, 230);
-      document.body.style.overflow = "";
+      setTimeout(() => {
+        sheet.hidden = true;
+        if (!document.querySelector(".sheet-backdrop.open")) document.body.style.overflow = "";
+      }, 230);
     }
 
     function showToast(message) {
@@ -1177,11 +1568,21 @@
       el.appForm.reset();
       el.appError.textContent = "";
       document.querySelector("#appId").value = app?.id ?? "";
-      document.querySelector("#appName").value = app?.nome ?? "";
+      el.appName.value = app?.nome ?? "";
       document.querySelector("#appUrl").value = app?.url ?? "";
-      document.querySelector("#appEmoji").value = app?.emoji ?? "";
       document.querySelector("#appCategory").value = app?.category ?? "Outros";
       document.querySelector("#appDescription").value = app?.description ?? "";
+      el.appImageInput.value = "";
+      const suggestion = suggestIcon(app?.nome ?? "");
+      const iconType = app?.iconType === "image" && safeIconImage(app.iconValue) ? "image" : "emoji";
+      const iconValue = iconType === "image" ? app.iconValue : (app?.iconValue || app?.emoji || suggestion.emoji);
+      state.iconDraft = {
+        type: iconType,
+        value: iconValue,
+        suggestedEmoji: suggestion.emoji,
+        manual: iconType === "image" || iconValue !== suggestion.emoji
+      };
+      updateIconPreview();
       el.appFormTitle.textContent = app ? "Editar aplicativo" : "Novo aplicativo";
       el.deleteAppButton.hidden = !app;
       openSheet(el.appSheet);
@@ -1232,6 +1633,7 @@
         state.favorites.delete(key);
         state.recent = state.recent.filter(item => item !== key);
         delete state.details[key];
+        delete state.details[`url:${app.url}`];
         writeJSON(STORAGE.favorites, [...state.favorites]);
         writeJSON(STORAGE.recent, state.recent);
         writeJSON(STORAGE.details, state.details);
@@ -1410,6 +1812,49 @@
     el.deleteAppButton.addEventListener("click", openDeleteConfirmation);
     el.confirmDeleteButton.addEventListener("click", deleteSelectedApp);
     el.pinForm.addEventListener("submit", handlePinSubmit);
+    el.appName.addEventListener("input", () => applySuggestedIcon(false));
+    el.useSuggestionButton.addEventListener("click", () => applySuggestedIcon(true));
+    el.openEmojiButton.addEventListener("click", () => {
+      state.emojiCategory = state.recentEmojis.length ? "Recentes" : "Rostos";
+      el.emojiSearch.value = "";
+      renderEmojiCategories();
+      renderEmojiGrid();
+      openSheet(el.emojiSheet);
+    });
+    el.emojiCategories.addEventListener("click", event => {
+      const button = event.target.closest("[data-emoji-category]");
+      if (!button) return;
+      state.emojiCategory = button.dataset.emojiCategory;
+      el.emojiSearch.value = "";
+      renderEmojiCategories();
+      renderEmojiGrid();
+    });
+    el.emojiGrid.addEventListener("click", event => {
+      const button = event.target.closest("[data-emoji]");
+      if (button) selectEmoji(button.dataset.emoji);
+    });
+    el.emojiSearch.addEventListener("input", renderEmojiGrid);
+    el.appImageInput.addEventListener("change", async () => {
+      const file = el.appImageInput.files?.[0];
+      if (!file) return;
+      el.appError.textContent = "";
+      el.iconChoiceTitle.textContent = "Otimizando imagem…";
+      try {
+        const value = await optimizeImage(file);
+        state.iconDraft = {
+          type: "image",
+          value,
+          suggestedEmoji: suggestIcon(el.appName.value).emoji,
+          manual: true
+        };
+        updateIconPreview();
+        showToast("Imagem pronta para usar.");
+      } catch (error) {
+        el.appImageInput.value = "";
+        el.appError.textContent = error.message;
+        updateIconPreview();
+      }
+    });
 
     el.appForm.addEventListener("submit", async event => {
       event.preventDefault();
@@ -1419,13 +1864,13 @@
         return;
       }
       const id = document.querySelector("#appId").value;
-      const nome = document.querySelector("#appName").value.trim();
+      const nome = el.appName.value.trim();
       const url = document.querySelector("#appUrl").value.trim();
-      const emoji = document.querySelector("#appEmoji").value.trim();
+      const emoji = (state.iconDraft.type === "emoji" ? state.iconDraft.value : state.iconDraft.suggestedEmoji).trim();
       const category = document.querySelector("#appCategory").value;
       const description = document.querySelector("#appDescription").value.trim();
       if (!nome || !emoji || !validHttpUrl(url)) {
-        el.appError.textContent = "Confira o nome, o emoji e use um link http(s) válido.";
+        el.appError.textContent = "Confira o nome, o ícone e use um link http(s) válido.";
         return;
       }
 
@@ -1433,14 +1878,25 @@
       submit.disabled = true;
       submit.textContent = "Salvando…";
       try {
+        const detailsKey = id ? String(id) : `url:${url}`;
+        const previousDetails = state.details[detailsKey];
+        state.details[detailsKey] = {
+          category,
+          description,
+          iconType: state.iconDraft.type,
+          iconValue: state.iconDraft.value
+        };
+        if (!writeJSON(STORAGE.details, state.details)) {
+          if (previousDetails) state.details[detailsKey] = previousDetails;
+          else delete state.details[detailsKey];
+          throw new Error("Não há espaço suficiente para salvar esta imagem.");
+        }
         await postApp({ action: id ? "editar" : "adicionar", id: id ? Number(id) : null, nome, url, emoji });
-        if (id) state.details[String(id)] = { category, description };
-        writeJSON(STORAGE.details, state.details);
         closeSheet(el.appSheet);
         showToast("Alteração enviada. Sincronizando…");
         setTimeout(loadApps, 900);
-      } catch {
-        el.appError.textContent = "Não foi possível salvar agora. Tente novamente.";
+      } catch (error) {
+        el.appError.textContent = error.message || "Não foi possível salvar agora. Tente novamente.";
       } finally {
         submit.disabled = false;
         submit.textContent = "Salvar app";
