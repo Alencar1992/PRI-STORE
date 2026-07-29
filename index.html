@@ -634,8 +634,6 @@
 
     .icon-option strong { color: var(--text); font-size: 1.08rem; line-height: 1; }
     .icon-option.active { border-color: var(--stroke-strong); background: rgba(203,183,255,.12); color: var(--lilac); }
-    .icon-option input { display: none; }
-
     .emoji-toolbar {
       display: flex;
       gap: 8px;
@@ -927,11 +925,11 @@
               <strong aria-hidden="true">😊</strong>
               Emojis
             </button>
-            <label class="icon-option" id="imageOption">
+            <button class="icon-option" id="imageOption" type="button" aria-pressed="false">
               <strong aria-hidden="true">🖼️</strong>
               Imagem
-              <input id="appImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-            </label>
+            </button>
+            <input class="visually-hidden" id="appImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="Selecionar imagem do aplicativo">
           </div>
           <input id="appEmoji" type="hidden" value="✨">
           <input id="appIconType" type="hidden" value="emoji">
@@ -1821,6 +1819,7 @@
       renderEmojiGrid();
       openSheet(el.emojiSheet);
     });
+    el.imageOption.addEventListener("click", () => el.appImageInput.click());
     el.emojiCategories.addEventListener("click", event => {
       const button = event.target.closest("[data-emoji-category]");
       if (!button) return;
