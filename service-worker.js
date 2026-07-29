@@ -1,4 +1,4 @@
-const CACHE_NAME = "pri-store-shell-v4";
+const CACHE_NAME = "pri-store-shell-v5";
 const APP_SHELL = ["./", "./index.html", "./icon1.png", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
