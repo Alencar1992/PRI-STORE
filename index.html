@@ -344,7 +344,13 @@
     }
 
     .app-content { position: relative; z-index: 1; min-width: 0; }
-    .app-name { margin: 0; font-size: .96rem; line-height: 1.22; }
+    .app-name {
+      margin: 0;
+      font-size: .96rem;
+      line-height: 1.22;
+      letter-spacing: .025em;
+      text-transform: uppercase;
+    }
     .app-description {
       display: -webkit-box;
       margin: 5px 0 8px;
@@ -376,7 +382,14 @@
       content: "";
     }
 
-    .card-actions { position: relative; z-index: 2; display: grid; gap: 4px; }
+    .card-actions {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      gap: 4px;
+      isolation: isolate;
+      pointer-events: auto;
+    }
 
     .card-action {
       display: grid;
@@ -387,11 +400,15 @@
       border-radius: 15px;
       background: transparent;
       color: var(--muted);
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .card-action svg { width: 22px; height: 22px; }
     .card-action.favorite.active { color: var(--pink); }
     .card-action.admin-action { display: none; color: var(--lilac); }
+    .card-action.delete-action { color: var(--danger); }
     body.admin-mode .card-action.admin-action { display: grid; }
 
     .open-app {
@@ -399,6 +416,7 @@
       z-index: 1;
       inset: 0 58px 0 0;
       border-radius: inherit;
+      touch-action: manipulation;
     }
 
     .empty-state {
@@ -750,9 +768,87 @@
 
     @keyframes shimmer { to { background-position: -240% 0; } }
 
-    @media (min-width: 700px) {
-      .app-shell { padding-right: 24px; padding-left: 24px; }
-      .filters { margin-right: -24px; margin-left: -24px; padding-right: 24px; padding-left: 24px; }
+    @media (min-width: 820px) {
+      .app-shell {
+        width: min(100%, 1180px);
+        padding: 28px 32px 48px;
+      }
+
+      .topbar {
+        min-height: 68px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--stroke);
+      }
+
+      .brand-mark { width: 48px; height: 48px; flex-basis: 48px; }
+      .brand-name { font-size: 1.08rem; }
+      .brand-status { font-size: .75rem; }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(380px, .9fr) minmax(420px, 1.1fr);
+        align-items: end;
+        gap: 64px;
+        padding: 58px 4px 36px;
+      }
+
+      .hero-copy {
+        align-self: end;
+        margin: 0 0 7px;
+        font-size: 1.02rem;
+      }
+
+      h1 { max-width: 560px; font-size: clamp(3.5rem, 6vw, 5.4rem); }
+      .search-wrap { max-width: 720px; }
+
+      .filters {
+        margin-right: 0;
+        margin-left: 0;
+        padding-right: 0;
+        padding-left: 0;
+      }
+
+      .section-head { margin-top: 38px; }
+      .app-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .app-card { min-height: 132px; padding: 19px 14px 19px 18px; }
+      .app-name { font-size: 1rem; }
+
+      .bottom-nav {
+        top: 26px;
+        right: max(96px, calc((100vw - 980px) / 2));
+        bottom: auto;
+        left: auto;
+        width: 430px;
+        min-height: 58px;
+        border-radius: 20px;
+      }
+
+      .nav-button {
+        min-height: 44px;
+        grid-template-columns: 20px auto;
+        align-content: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 4px 10px;
+        border-radius: 14px;
+        font-size: .72rem;
+      }
+
+      .nav-button svg { width: 19px; height: 19px; }
+
+      .admin-fab {
+        right: max(32px, calc((100vw - 1116px) / 2));
+        bottom: 32px;
+      }
+
+      .sheet-backdrop { align-items: center; }
+      .sheet { border-radius: 28px; }
+      .sheet-handle { display: none; }
+      .sheet-header { margin-top: 10px; }
+    }
+
+    @media (min-width: 1180px) {
+      .app-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
 
     @media (max-width: 350px) {
@@ -1188,7 +1284,7 @@
     function normalizeApp(app, index) {
       const base = {
         id: app.id ?? index + 1,
-        nome: String(app.nome || "Aplicativo").trim(),
+        nome: String(app.nome || "Aplicativo").trim().toLocaleUpperCase("pt-BR"),
         url: String(app.url || "#").trim(),
         emoji: String(app.emoji || "✨").trim()
       };
@@ -1204,7 +1300,8 @@
         ...profile,
         iconType: app.iconType === "image" ? "image" : "emoji",
         iconValue: app.iconValue || base.emoji,
-        ...local
+        ...local,
+        iconMode: local.iconMode || (local.iconValue ? "manual" : "automatic")
       };
     }
 
@@ -1224,6 +1321,11 @@
     function suggestIcon(name) {
       const suggestion = ICON_SUGGESTIONS.find(item => item.match.test(String(name || "")));
       return suggestion || { emoji: "🧩", label: "Aplicativo" };
+    }
+
+    function faviconUrl(url) {
+      if (!validHttpUrl(url)) return "";
+      return `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(url)}&sz=128`;
     }
 
     function updateIconPreview() {
@@ -1426,8 +1528,24 @@
         image.src = app.iconValue;
         image.alt = "";
         appIcon.append(image);
+      } else if (app.iconMode === "manual") {
+        appIcon.textContent = app.iconValue || app.emoji || suggestIcon(app.nome).emoji;
       } else {
-        appIcon.textContent = app.iconValue || app.emoji || "✨";
+        const suggested = suggestIcon(app.nome).emoji;
+        const websiteIcon = faviconUrl(app.url);
+        if (websiteIcon) {
+          const image = document.createElement("img");
+          image.src = websiteIcon;
+          image.alt = "";
+          image.referrerPolicy = "no-referrer";
+          image.addEventListener("error", () => {
+            appIcon.replaceChildren();
+            appIcon.textContent = app.iconValue || app.emoji || suggested;
+          }, { once: true });
+          appIcon.append(image);
+        } else {
+          appIcon.textContent = app.iconValue || app.emoji || suggested;
+        }
       }
 
       const content = document.createElement("div");
@@ -1466,15 +1584,38 @@
       favorite.setAttribute("aria-label", state.favorites.has(key) ? `Remover ${app.nome} dos favoritos` : `Adicionar ${app.nome} aos favoritos`);
       favorite.setAttribute("aria-pressed", String(state.favorites.has(key)));
       favorite.append(icon("M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"));
-      favorite.addEventListener("click", () => toggleFavorite(key));
+      favorite.addEventListener("pointerdown", event => {
+        event.stopPropagation();
+      });
+      favorite.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleFavorite(key);
+      });
 
       const edit = document.createElement("button");
       edit.className = "card-action admin-action";
       edit.type = "button";
       edit.setAttribute("aria-label", `Editar ${app.nome}`);
       edit.append(icon("M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"));
-      edit.addEventListener("click", () => openAppForm(app));
-      actions.append(favorite, edit);
+      edit.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openAppForm(app);
+      });
+
+      const remove = document.createElement("button");
+      remove.className = "card-action admin-action delete-action";
+      remove.type = "button";
+      remove.setAttribute("aria-label", `Excluir ${app.nome}`);
+      remove.append(icon("M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"));
+      remove.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openDeleteConfirmation(app);
+      });
+
+      actions.append(favorite, edit, remove);
       card.append(appIcon, content, actions, link);
       return card;
     }
@@ -1587,14 +1728,14 @@
       openSheet(el.appSheet);
     }
 
-    function openDeleteConfirmation() {
+    function openDeleteConfirmation(selectedApp = null) {
       if (!isAdmin()) {
         closeSheet(el.appSheet);
         openPinSheet();
         return;
       }
       const id = document.querySelector("#appId").value;
-      const app = state.apps.find(item => String(item.id) === String(id));
+      const app = selectedApp || state.apps.find(item => String(item.id) === String(id));
       if (!app) {
         el.appError.textContent = "Não foi possível localizar este aplicativo.";
         return;
@@ -1811,7 +1952,13 @@
     el.deleteAppButton.addEventListener("click", openDeleteConfirmation);
     el.confirmDeleteButton.addEventListener("click", deleteSelectedApp);
     el.pinForm.addEventListener("submit", handlePinSubmit);
-    el.appName.addEventListener("input", () => applySuggestedIcon(false));
+    el.appName.addEventListener("input", () => {
+      const start = el.appName.selectionStart;
+      const end = el.appName.selectionEnd;
+      el.appName.value = el.appName.value.toLocaleUpperCase("pt-BR");
+      el.appName.setSelectionRange(start, end);
+      applySuggestedIcon(false);
+    });
     el.useSuggestionButton.addEventListener("click", () => applySuggestedIcon(true));
     el.openEmojiButton.addEventListener("click", () => {
       state.emojiCategory = state.recentEmojis.length ? "Recentes" : "Rostos";
@@ -1864,7 +2011,7 @@
         return;
       }
       const id = document.querySelector("#appId").value;
-      const nome = el.appName.value.trim();
+      const nome = el.appName.value.trim().toLocaleUpperCase("pt-BR");
       const url = document.querySelector("#appUrl").value.trim();
       const emoji = (state.iconDraft.type === "emoji" ? state.iconDraft.value : state.iconDraft.suggestedEmoji).trim();
       const category = document.querySelector("#appCategory").value;
@@ -1884,7 +2031,8 @@
           category,
           description,
           iconType: state.iconDraft.type,
-          iconValue: state.iconDraft.value
+          iconValue: state.iconDraft.value,
+          iconMode: state.iconDraft.manual ? "manual" : "automatic"
         };
         if (!writeJSON(STORAGE.details, state.details)) {
           if (previousDetails) state.details[detailsKey] = previousDetails;
