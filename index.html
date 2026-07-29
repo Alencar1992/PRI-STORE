@@ -814,7 +814,28 @@
           <button class="button" type="button" data-close="appSheet">Cancelar</button>
           <button class="button primary" type="submit">Salvar app</button>
         </div>
+        <button class="button danger full" id="deleteAppButton" type="button" hidden>Excluir aplicativo</button>
       </form>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" id="deleteSheet" role="dialog" aria-modal="true" aria-labelledby="deleteTitle" hidden>
+    <section class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <h2 id="deleteTitle">Excluir aplicativo?</h2>
+          <p id="deleteDescription">Esta ação removerá o aplicativo da galeria.</p>
+        </div>
+        <button class="close-sheet" type="button" data-close="deleteSheet" aria-label="Fechar">✕</button>
+      </div>
+      <div class="admin-panel">
+        <p class="form-error" id="deleteError" role="alert"></p>
+        <div class="button-row">
+          <button class="button" type="button" data-close="deleteSheet">Cancelar</button>
+          <button class="button danger" id="confirmDeleteButton" type="button">Excluir agora</button>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -875,7 +896,8 @@
       recent: readJSON(STORAGE.recent, []),
       details: readJSON(STORAGE.details, {}),
       adminUntil: 0,
-      pinFailures: 0
+      pinFailures: 0,
+      deleteTarget: null
     };
 
     const el = {
@@ -899,6 +921,11 @@
       appForm: document.querySelector("#appForm"),
       appFormTitle: document.querySelector("#appFormTitle"),
       appError: document.querySelector("#appError"),
+      deleteAppButton: document.querySelector("#deleteAppButton"),
+      deleteSheet: document.querySelector("#deleteSheet"),
+      deleteDescription: document.querySelector("#deleteDescription"),
+      deleteError: document.querySelector("#deleteError"),
+      confirmDeleteButton: document.querySelector("#confirmDeleteButton"),
       addAppButton: document.querySelector("#addAppButton"),
       settingsSheet: document.querySelector("#settingsSheet"),
       settingsButton: document.querySelector("#settingsButton"),
@@ -1156,7 +1183,67 @@
       document.querySelector("#appCategory").value = app?.category ?? "Outros";
       document.querySelector("#appDescription").value = app?.description ?? "";
       el.appFormTitle.textContent = app ? "Editar aplicativo" : "Novo aplicativo";
+      el.deleteAppButton.hidden = !app;
       openSheet(el.appSheet);
+    }
+
+    function openDeleteConfirmation() {
+      if (!isAdmin()) {
+        closeSheet(el.appSheet);
+        openPinSheet();
+        return;
+      }
+      const id = document.querySelector("#appId").value;
+      const app = state.apps.find(item => String(item.id) === String(id));
+      if (!app) {
+        el.appError.textContent = "Não foi possível localizar este aplicativo.";
+        return;
+      }
+      state.deleteTarget = app;
+      el.deleteError.textContent = "";
+      el.deleteDescription.textContent = `“${app.nome}” será removido da galeria. Esta ação não pode ser desfeita.`;
+      closeSheet(el.appSheet);
+      setTimeout(() => openSheet(el.deleteSheet), 240);
+    }
+
+    async function deleteSelectedApp() {
+      const app = state.deleteTarget;
+      if (!app) return;
+      if (!isAdmin()) {
+        closeSheet(el.deleteSheet);
+        openPinSheet();
+        return;
+      }
+
+      el.deleteError.textContent = "";
+      el.confirmDeleteButton.disabled = true;
+      el.confirmDeleteButton.textContent = "Excluindo…";
+      try {
+        await postApp({ action: "excluir", id: app.id });
+        await new Promise(resolve => setTimeout(resolve, 1100));
+        await loadApps();
+
+        const stillExists = state.apps.some(item => String(item.id) === String(app.id));
+        if (stillExists) {
+          throw new Error("O servidor não confirmou a exclusão.");
+        }
+
+        const key = appKey(app);
+        state.favorites.delete(key);
+        state.recent = state.recent.filter(item => item !== key);
+        delete state.details[key];
+        writeJSON(STORAGE.favorites, [...state.favorites]);
+        writeJSON(STORAGE.recent, state.recent);
+        writeJSON(STORAGE.details, state.details);
+        state.deleteTarget = null;
+        closeSheet(el.deleteSheet);
+        showToast("Aplicativo excluído da galeria.");
+      } catch {
+        el.deleteError.textContent = "O servidor não confirmou a exclusão. Nenhum dado foi ocultado.";
+      } finally {
+        el.confirmDeleteButton.disabled = false;
+        el.confirmDeleteButton.textContent = "Excluir agora";
+      }
     }
 
     function isAdmin() {
@@ -1320,6 +1407,8 @@
       showToast("PIN removido deste aparelho.");
     });
     el.addAppButton.addEventListener("click", () => openAppForm());
+    el.deleteAppButton.addEventListener("click", openDeleteConfirmation);
+    el.confirmDeleteButton.addEventListener("click", deleteSelectedApp);
     el.pinForm.addEventListener("submit", handlePinSubmit);
 
     el.appForm.addEventListener("submit", async event => {
